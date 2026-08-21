@@ -1,59 +1,180 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🎓 QLC - Quranic Leadership Centre Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
+[![React](https://img.shields.io/badge/React-18.x-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
+[![Inertia.js](https://img.shields.io/badge/Inertia.js-2.x-9553E9?style=for-the-badge&logo=inertia&logoColor=white)](https://inertiajs.com)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 
-## About Laravel
+**QLC (Quranic Leadership Centre)** adalah platform manajemen pembelajaran (LMS) dan portal pendidikan modern yang dirancang untuk mengintegrasikan interaksi antara **Admin**, **Guru (Teacher)**, **Orang Tua (Parents)**, dan **Mitra**. Platform ini dilengkapi dengan landing page interaktif, pendaftaran siswa online, serta sistem laporan perkembangan siswa secara real-time.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🚀 Fitur Utama
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **🌐 Public Landing Page Interaktif**:
+  - Profil lembaga & pengurus (*Foundations & Leaders*).
+  - Katalog program pendidikan & detail program.
+  - Galeri kegiatan (Foto & Video) dan Agenda kegiatan terbaru.
+  - Halaman pengajuan kerja sama mitra.
 
-## Learning Laravel
+- **👥 Multi-Role User System**:
+  - **Admin**: Dashboard analitik menyeluruh, manajemen master data, program, galeri, dan user.
+  - **Teacher**: Pengelolaan laporan perkembangan siswa (*Progress Reports*), penjadwalan, dan presensi.
+  - **Parents**: Pendaftaran siswa baru (*Enrollment*) dengan unggah dokumen, serta pemantauan laporan belajar anak.
+  - **Mitra**: Dashboard laporan kerja sama dan kolaborasi program.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- **🔐 Autentikasi & Keamanan**:
+  - Autentikasi berbasis Laravel Breeze + Inertia.
+  - Verifikasi pendaftaran berbasis **OTP Email** & penanganan sesi aman.
+  - Middleware kontrol akses berbasis peran (*Role-based Access Control / RBAC*).
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **🔔 API Notifikasi**:
+  - Sistem pengiriman & penandaan notifikasi terbaca (*Mark as Read*) secara real-time.
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 🛠️ Stack Teknologi
 
-### Premium Partners
+- **Backend**: [Laravel 12](https://laravel.com)
+- **Database**: [MongoDB](https://www.mongodb.com/) (menggunakan driver `mongodb/laravel-mongodb`)
+- **Frontend**: [React 18](https://react.dev) + [TypeScript](https://www.typescriptlang.org/) via [Inertia.js 2.0](https://inertiajs.com)
+- **Bundler & Build Tool**: [Vite 7](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com) + [Lucide React Icons](https://lucide.dev/)
+- **Code Quality**:
+  - [Laravel Pint](https://laravel.com/docs/pint) (PHP Code Style)
+  - TypeScript Compiler (`tsc --noEmit`)
+  - PHPUnit / Artisan Test Suite
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
 
-## Contributing
+## 📋 Prasyarat Sistem
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Sebelum menjalankan proyek ini, pastikan sistem Anda telah memenuhi prasyarat berikut:
 
-## Code of Conduct
+- **PHP** `>= 8.2` (dengan ekstensi `mongodb` terinstal)
+- **Composer** `>= 2.x`
+- **Node.js** `>= 18.x` & **npm** `>= 9.x`
+- **MongoDB** (Lokal atau MongoDB Atlas Cluster)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## ⚙️ Panduan Instalasi & Pengaturan
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Follow langkah-langkah di bawah untuk menjalankan proyek secara lokal:
 
-## License
+### 1. Clone Repository & Masuk ke Direktori
+```bash
+git clone https://github.com/Haitsam06/QLC.git
+cd QLC
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 2. Instal Dependensi (PHP & Node.js)
+```bash
+composer install
+npm install
+```
+
+### 3. Konfigurasi Environment File
+Salin `.env.example` menjadi `.env`:
+```bash
+cp .env.example .env
+```
+Buka file `.env` dan atur variabel koneksi MongoDB serta Mail Server:
+```env
+APP_NAME="Quranic Leadership Centre"
+APP_URL=http://127.0.0.1:8000
+
+# Database Configuration (MongoDB)
+DB_CONNECTION=mongodb
+MONGODB_URI="mongodb+srv://<username>:<password>@<cluster>.mongodb.net/?appName=Cluster0"
+MONGODB_DATABASE=qlc
+
+# Mail Configuration (SMTP / Mailtrap)
+MAIL_MAILER=smtp
+MAIL_HOST=sandbox.smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=your_username
+MAIL_PASSWORD=your_password
+```
+
+### 4. Generate Application Key
+```bash
+php artisan key:generate
+```
+
+### 5. Seeding Database
+Jalankan seeder untuk mengisi data awal (Role, Admin, Landing Page, Program, dll):
+```bash
+php artisan db:seed
+```
+
+### 6. Jalankan Server Pengembang (Development Server)
+Anda dapat menjalankan server backend (Laravel) dan frontend (Vite) sekaligus menggunakan command concurrently bawaan:
+```bash
+npm run dev
+# ATAU via Composer:
+composer run dev
+```
+
+Aplikasi dapat diakses melalui browser di: `http://127.0.0.1:8000`
+
+---
+
+## 🧪 Perintah Pengembangan & Quality Check
+
+- **Menjalankan TypeScript Type-Checking**:
+  ```bash
+  npx tsc --noEmit
+  ```
+
+- **Menjelajah & Memeriksa Formatting Code Style PHP (Pint)**:
+  ```bash
+  # Uji format tanpa mengubah file (Dry-run)
+  ./vendor/bin/pint --test
+
+  # Perbaiki format PHP secara otomatis
+  ./vendor/bin/pint
+  ```
+
+- **Menjalankan Pengujian (Testing)**:
+  ```bash
+  php artisan test
+  ```
+
+- **Build untuk Production**:
+  ```bash
+  npm run build
+  ```
+
+---
+
+## 📂 Struktur Direktori Utama
+
+```text
+QLC/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/     # Controller untuk Admin, Teacher, Parents, Mitra, Auth
+│   │   └── Middleware/      # Middleware RBAC & Security Headers
+│   ├── Mail/                # Mailable (Send OTP Mail, Verify Registration)
+│   └── Models/              # Model Eloquent MongoDB (User, Student, Program, etc.)
+├── config/                  # File konfigurasi aplikasi & MongoDB
+├── database/
+│   ├── migrations/          # Migrasi koleksi MongoDB
+│   └── seeders/             # Data seeder dummy & master data
+├── resources/
+│   ├── js/                  # Source code Frontend (React + TypeScript + Inertia)
+│   │   ├── Components/      # Reusable UI components
+│   │   ├── Layouts/         # App Layouts per role
+│   │   └── Pages/           # Inertia Pages (Welcome, Dashboards, Landing, etc.)
+│   └── css/                 # Global styles & Tailwind entrypoint
+├── routes/
+│   ├── web.php              # Route aplikasi utama & role-based dashboard
+│   ├── api.php              # Endpoint API (Notifikasi, dll)
+│   └── auth.php             # Route autentikasi Laravel Breeze
+└── vite.config.js           # Konfigurasi Vite + React + Laravel Plugin
+```
+
+---
