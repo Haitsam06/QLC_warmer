@@ -40,7 +40,7 @@ class HandleInertiaRequests extends Middleware
 
             // Query parent hanya untuk role parents — tidak untuk admin/teacher/mitra
             if ($roleName === 'parents') {
-                $parent      = Parents::where('user_id', (string) $user->_id)->first();
+                $parent      = Parents::where('user_id', $user->id)->first();
                 $displayName = $parent?->parent_name ?? $user->username;
             } else {
                 $displayName = $user->username;
@@ -51,7 +51,8 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $user ? [
-                    '_id'     => (string) $user->_id,
+                    'id'      => $user->id,
+                    '_id'     => (string) $user->id,
                     'name'    => $displayName,
                     'username' => $user->username,
                     'email'   => $user->email,

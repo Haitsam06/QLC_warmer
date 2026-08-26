@@ -18,10 +18,10 @@ class UsersSeeder extends Seeder
 
         User::truncate();
 
-        $adminPass   = env('SEED_ADMIN_PASSWORD',  Str::random(16));
-        $guruPass    = env('SEED_GURU_PASSWORD',   Str::random(16));
-        $waliPass    = env('SEED_WALI_PASSWORD',   Str::random(16));
-        $mitraPass   = env('SEED_MITRA_PASSWORD',  Str::random(16));
+        $adminPass   = env('PASSWORD');
+        $guruPass    = env('PASSWORD');
+        $waliPass    = env('PASSWORD');
+        $mitraPass   = env('PASSWORD');
 
         // Admin
         User::create([

@@ -84,8 +84,8 @@ class ProgressReportSeeder extends Seeder
             $teacher = $teachers[$r['teacher_index']] ?? $teachers->first();
 
             ProgressReport::create([
-                'student_id'          => (string) $student->_id,
-                'teacher_id'          => (string) $teacher->_id,
+                'student_id'          => $student->id,
+                'teacher_id'          => $teacher->id,
                 'date'                => $r['date'],
                 'attendance'          => $r['attendance'],
                 'report_type'         => $r['report_type'],

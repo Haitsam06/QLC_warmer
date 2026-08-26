@@ -24,12 +24,12 @@ class SettingsController extends Controller
             'photo'    => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        // Cek uniqueness secara manual agar kompatibel dengan MongoDB ObjectId
-        if (User::where('username', $request->username)->where('_id', '!=', (string) $user->_id)->exists()) {
+        // Cek uniqueness
+        if (User::where('username', $request->username)->where('id', '!=', $user->id)->exists()) {
             return back()->withErrors(['username' => 'Username sudah digunakan orang lain.'])->withInput();
         }
 
-        if ($request->filled('email') && User::where('email', $request->email)->where('_id', '!=', (string) $user->_id)->exists()) {
+        if ($request->filled('email') && User::where('email', $request->email)->where('id', '!=', $user->id)->exists()) {
             return back()->withErrors(['email' => 'Email sudah terdaftar pada akun lain.'])->withInput();
         }
 

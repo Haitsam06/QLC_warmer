@@ -23,7 +23,7 @@ class MitraSeeder extends Seeder
         foreach ($profiles as $p) {
             $user = $users[$p['email']] ?? null;
             Partner::create([
-                'user_id'          => $user ? (string) $user->_id : null,
+                'user_id'          => $user ? $user->id : null,
                 'institution_name' => $p['institution_name'],
                 'contact_person'   => $p['contact_person'],
                 'phone'            => $p['phone'],

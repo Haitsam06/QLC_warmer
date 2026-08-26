@@ -12,22 +12,22 @@ class RolesSeeder extends Seeder
         Role::truncate();
 
         Role::create([
-            '_id' => 'RL01',
+            'id' => 'RL01',
             'role_name' => 'admin'
         ]);
 
         Role::create([
-            '_id' => 'RL02',
+            'id' => 'RL02',
             'role_name' => 'teacher'
         ]);
 
         Role::create([
-            '_id' => 'RL03',
+            'id' => 'RL03',
             'role_name' => 'parents'
         ]);
         
         Role::create([
-            '_id' => 'RL04',
+            'id' => 'RL04',
             'role_name' => 'mitra'
         ]);
     }

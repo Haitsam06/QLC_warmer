@@ -1,23 +1,27 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use MongoDB\Laravel\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        Schema::connection('mongodb')->create('parents', function (Blueprint $collection) {
+        Schema::create('parents', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('parent_name');
+            $table->string('phone')->nullable();
+            $table->text('address')->nullable();
+            $table->timestamps();
 
-            $collection->index('user_id');
-            $collection->index('phone');
-
+            $table->index('phone');
         });
     }
 
-    public function down()
+    public function down(): void
     {
-        Schema::connection('mongodb')->dropIfExists('parents');
+        Schema::dropIfExists('parents');
     }
 };

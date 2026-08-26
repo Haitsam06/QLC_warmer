@@ -2,22 +2,21 @@
 
 namespace App\Models;
 
-use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class Role extends Model
 {
-    protected $connection = 'mongodb';
+    protected $table = 'roles';
 
-    protected $collection = 'roles';
-
-    protected $primaryKey = '_id';
+    protected $primaryKey = 'id';
 
     public $incrementing = false;
 
     protected $keyType = 'string';
 
     protected $fillable = [
-        '_id',
-        'role_name'
+        'id',
+        'role_name',
+        'description',
     ];
 }

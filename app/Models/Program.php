@@ -2,18 +2,16 @@
 
 namespace App\Models;
 
-use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class Program extends Model
 {
-    protected $connection = 'mongodb';
-    protected $collection = 'programs';
+    protected $table = 'programs';
 
     protected $fillable = [
         'name',
         'description',
         'target_audience',
-        // 'duration' telah dihapus
         'image_url',
         'hero_image_url',
         'about_image_url',

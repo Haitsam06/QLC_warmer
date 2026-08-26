@@ -13,7 +13,7 @@ class AgendaSeeder extends Seeder
         Agenda::truncate();
 
         $admin = User::where('role_id', 'RL01')->first();
-        $userId = $admin ? (string) $admin->_id : null;
+        $userId = $admin ? $admin->id : null;
 
         $items = [
             [

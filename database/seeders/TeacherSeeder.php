@@ -25,7 +25,7 @@ class TeacherSeeder extends Seeder
         foreach ($profiles as $p) {
             $user = $users[$p['email']] ?? null;
             Teacher::create([
-                'user_id'   => $user ? (string) $user->_id : null,
+                'user_id'   => $user ? $user->id : null,
                 'nama_guru' => $p['nama_guru'],
                 'bidang'    => $p['bidang'],
                 'phone'     => $p['phone'],

@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
-use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class ProgressReport extends Model
 {
-    protected $connection = 'mongodb';
-    protected $collection = 'progress_reports';
+    protected $table = 'progress_reports';
 
     protected $fillable = [
         'student_id',
@@ -21,4 +20,14 @@ class ProgressReport extends Model
         'teacher_notes',
         'created_by',
     ];
+
+    public function student()
+    {
+        return $this->belongsTo(Student::class);
+    }
+
+    public function teacher()
+    {
+        return $this->belongsTo(Teacher::class);
+    }
 }

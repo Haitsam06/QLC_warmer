@@ -1,40 +1,49 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use MongoDB\Laravel\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up()
+    public function up(): void
     {
-        // Koleksi Pilar/Fondasi
-        Schema::connection('mongodb')->create('foundations', function (Blueprint $collection) {
-            $collection->index('title');
+        Schema::create('foundations', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->timestamps();
         });
 
-        // Koleksi Pimpinan/Pengurus
-        Schema::connection('mongodb')->create('leaders', function (Blueprint $collection) {
-            $collection->index('nama');
-            $collection->index('jabatan');
+        Schema::create('leaders', function (Blueprint $table) {
+            $table->id();
+            $table->string('nama');
+            $table->string('jabatan')->nullable();
+            $table->text('deskripsi')->nullable();
+            $table->string('poin')->nullable();
+            $table->string('image_url')->nullable();
+            $table->timestamps();
         });
 
-        // Koleksi Program Layanan
-        Schema::connection('mongodb')->create('programs', function (Blueprint $collection) {
-            $collection->index('name');
-        });
-
-        // Koleksi Galeri
-        Schema::connection('mongodb')->create('gallery', function (Blueprint $collection) {
-            $collection->index('type'); // Index untuk membedakan Photo/Video dengan cepat
-            $collection->index('uploaded_at');
+        Schema::create('mitra_reports', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('partner_id')->constrained('partners')->cascadeOnDelete();
+            $table->string('title');
+            $table->date('date')->nullable();
+            $table->text('description')->nullable();
+            $table->string('file_url')->nullable();
+            $table->string('file_path')->nullable();
+            $table->string('file_name')->nullable();
+            $table->string('file_type')->nullable();
+            $table->string('file_size')->nullable();
+            $table->string('uploaded_by')->nullable();
+            $table->timestamps();
         });
     }
 
-    public function down()
+    public function down(): void
     {
-        Schema::connection('mongodb')->dropIfExists('foundations');
-        Schema::connection('mongodb')->dropIfExists('leaders');
-        Schema::connection('mongodb')->dropIfExists('programs');
-        Schema::connection('mongodb')->dropIfExists('gallery');
+        Schema::dropIfExists('mitra_reports');
+        Schema::dropIfExists('leaders');
+        Schema::dropIfExists('foundations');
     }
 };

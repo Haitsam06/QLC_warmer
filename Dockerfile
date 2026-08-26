@@ -9,7 +9,7 @@ RUN npm run build
 # Stage 2: PHP Application
 FROM php:8.2-fpm-alpine
 
-# Install system dependencies & PHP MongoDB extension
+# Install system dependencies & PHP PostgreSQL extension
 RUN apk add --no-cache \
     nginx \
     supervisor \
@@ -19,10 +19,11 @@ RUN apk add --no-cache \
     zip \
     unzip \
     git \
+    postgresql-dev \
     $PHPIZE_DEPS \
     openssl-dev
 
-RUN pecl install mongodb && docker-php-ext-enable mongodb
+RUN docker-php-ext-install pdo pdo_pgsql pgsql
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

@@ -74,9 +74,9 @@ class StudentSeeder extends Seeder
             $program = $programs[$s['program_index']] ?? $programs->first();
 
             Student::create([
-                'parent_id'         => (string) $parent->user_id,
+                'parent_id'         => $parent->id,
                 'parent_name'       => $parent->parent_name,
-                'program_id'        => (string) $program->_id,
+                'program_id'        => $program->id,
                 'nama'              => $s['nama'],
                 'tempat_lahir'      => $s['tempat_lahir'],
                 'tanggal_lahir'     => $s['tanggal_lahir'],

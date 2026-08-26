@@ -1,10 +1,11 @@
 <?php
+
 namespace App\Models;
-use MongoDB\Laravel\Eloquent\Model;
+
+use Illuminate\Database\Eloquent\Model;
 
 class Foundation extends Model
 {
-    protected $connection = 'mongodb';
-    protected $collection = 'foundations';
+    protected $table = 'foundations';
     protected $fillable = ['title', 'description'];
 }

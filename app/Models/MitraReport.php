@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
-use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class MitraReport extends Model
 {
-    protected $connection = 'mongodb';
-    protected $collection = 'mitra_reports';
+    protected $table = 'mitra_reports';
 
     protected $fillable = [
         'partner_id',
@@ -21,4 +20,9 @@ class MitraReport extends Model
         'file_size',
         'uploaded_by',
     ];
+
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class);
+    }
 }

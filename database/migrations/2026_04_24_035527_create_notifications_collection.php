@@ -1,24 +1,29 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use MongoDB\Laravel\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::connection('mongodb')->create('notifications', function (Blueprint $collection) {
-            // Index utama untuk query cepat
-            $collection->index('user_id');       // penerima notifikasi
-            $collection->index('is_read');       // filter belum dibaca
-            $collection->index('created_at');    // sorting terbaru
-            $collection->index('type');          // filter per tipe
+        Schema::create('notifications', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('type');
+            $table->string('title');
+            $table->text('message');
+            $table->string('link')->nullable();
+            $table->boolean('is_read')->default(false);
+            $table->timestamps();
+
+            $table->index(['user_id', 'is_read']);
         });
     }
 
     public function down(): void
     {
-        Schema::connection('mongodb')->dropIfExists('notifications');
+        Schema::dropIfExists('notifications');
     }
 };

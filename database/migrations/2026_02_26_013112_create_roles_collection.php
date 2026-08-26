@@ -1,22 +1,23 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use MongoDB\Laravel\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        Schema::connection('mongodb')->create('roles', function (Blueprint $collection) {
-
-            $collection->index('role_name');
-
+        Schema::create('roles', function (Blueprint $table) {
+            $table->string('id')->primary(); // RL01, RL02, RL03, RL04
+            $table->string('role_name')->unique();
+            $table->string('description')->nullable();
+            $table->timestamps();
         });
     }
 
-    public function down()
+    public function down(): void
     {
-        Schema::connection('mongodb')->dropIfExists('roles');
+        Schema::dropIfExists('roles');
     }
 };

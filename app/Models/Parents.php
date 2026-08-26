@@ -2,17 +2,12 @@
 
 namespace App\Models;
 
-use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class Parents extends Model
 {
-    // Menentukan koneksi database
-    protected $connection = 'mongodb';
-    
-    // Menentukan nama collection
-    protected $collection = 'parents';
+    protected $table = 'parents';
 
-    // Kolom yang diizinkan untuk diisi secara massal
     protected $fillable = [
         'user_id',
         'parent_name',
@@ -20,9 +15,13 @@ class Parents extends Model
         'address',
     ];
 
-    // (Opsional) Relasi balik ke collection users
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id', '_id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function students()
+    {
+        return $this->hasMany(Student::class, 'parent_id', 'id');
     }
 }

@@ -16,11 +16,11 @@ class TeacherDashboardController extends Controller
 {
     public function index(): Response
     {
-        $userId = (string) Auth::user()->_id;
+        $userId = Auth::id();
 
         // ── Profil guru ───────────────────────────────────────
         $teacherDoc = Teacher::where('user_id', $userId)->first();
-        $teacherId  = $teacherDoc ? (string) $teacherDoc->_id : null;
+        $teacherId  = $teacherDoc ? $teacherDoc->id : null;
 
         $profile = $teacherDoc ? [
             'nama_guru' => $teacherDoc->nama_guru ?? '—',
@@ -30,12 +30,12 @@ class TeacherDashboardController extends Controller
         ] : null;
 
         // ── Stats: total santri aktif ─────────────────────────
-        $allStudents = Student::where('enrollment_status', 'active')->get(['_id']);
+        $allStudents = Student::where('enrollment_status', 'active')->get(['id']);
         $totalSantri = $allStudents->count();
         $targetTercapai = 0;
 
         if ($totalSantri > 0) {
-            $studentIds = $allStudents->map(fn($s) => (string) $s->_id)->toArray();
+            $studentIds = $allStudents->pluck('id')->toArray();
 
             // Ambil laporan terbaru per siswa dalam satu query (batch — tidak N+1)
             $latestReports = ProgressReport::whereIn('student_id', $studentIds)
@@ -57,7 +57,7 @@ class TeacherDashboardController extends Controller
             ->take(10)
             ->get()
             ->map(fn($ag) => [
-                'id'     => (string) $ag->_id,
+                'id'     => $ag->id,
                 'time'   => '—',
                 'class'  => $ag->title       ?? '—',
                 'type'   => $ag->description ?? '—',
@@ -74,12 +74,12 @@ class TeacherDashboardController extends Controller
                 ->get();
 
             $studentIds = $reports->pluck('student_id')->filter()->unique()->values()->toArray();
-            $students   = Student::whereIn('_id', $studentIds)->get()->keyBy(fn($s) => (string) $s->_id);
+            $students   = Student::whereIn('id', $studentIds)->get()->keyBy(fn($s) => (string) $s->id);
 
             $programIds = $students->pluck('program_id')->filter()->unique()->values()->toArray();
-            $programs   = empty($programIds) ? [] : Program::whereIn('_id', $programIds)
-                ->get(['_id', 'name'])
-                ->keyBy(fn($p) => (string) $p->_id)
+            $programs   = empty($programIds) ? [] : Program::whereIn('id', $programIds)
+                ->get(['id', 'name'])
+                ->keyBy(fn($p) => (string) $p->id)
                 ->map(fn($p) => $p->name ?? '—')
                 ->toArray();
 
@@ -88,7 +88,7 @@ class TeacherDashboardController extends Controller
                 $studentDoc = $students[$sid] ?? null;
                 $pid        = (string) ($studentDoc?->program_id ?? '');
                 return [
-                    'id'             => (string) $r->_id,
+                    'id'             => $r->id,
                     'student_name'   => $studentDoc?->nama      ?? 'Santri',
                     'class_name'     => $programs[$pid]          ?? '—',
                     'report_type'    => $r->report_type         ?? 'hafalan',

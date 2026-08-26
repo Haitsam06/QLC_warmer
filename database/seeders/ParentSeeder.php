@@ -25,7 +25,7 @@ class ParentSeeder extends Seeder
         foreach ($profiles as $p) {
             $user = $users[$p['email']] ?? null;
             Parents::create([
-                'user_id'     => $user ? (string) $user->_id : null,
+                'user_id'     => $user ? $user->id : null,
                 'parent_name' => $p['parent_name'],
                 'phone'       => $p['phone'],
                 'address'     => $p['address'],

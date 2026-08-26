@@ -1,11 +1,13 @@
 <?php
+
 namespace App\Models;
-use MongoDB\Laravel\Eloquent\Model;
+
+use Illuminate\Database\Eloquent\Model;
 
 class Profile extends Model
 {
-    protected $connection = 'mongodb';
-    protected $collection = 'profiles';
+    protected $table = 'profiles';
+
     protected $fillable = [
         'name',
         'hero_title',
@@ -26,6 +28,7 @@ class Profile extends Model
         'bank_holder',
         'bank_nominal',
     ];
+
     protected $casts = [
         'social_media' => 'array',
     ];

@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
-use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class Agenda extends Model
 {
-    protected $connection = 'mongodb';
-    protected $collection = 'agenda';
+    protected $table = 'agenda';
 
     protected $fillable = [
         'user_id',
@@ -18,6 +17,11 @@ class Agenda extends Model
         'registration_link',
         'visibility',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function scopeForVisibility($query, string $visibility)
     {

@@ -56,7 +56,7 @@ class MitraReportSeeder extends Seeder
             $partner = $partners[$r['partner_index']] ?? $partners->first();
 
             MitraReport::create([
-                'partner_id'  => (string) $partner->_id,
+                'partner_id'  => $partner->id,
                 'title'       => $r['title'],
                 'date'        => $r['date'],
                 'description' => $r['description'],
@@ -65,7 +65,7 @@ class MitraReportSeeder extends Seeder
                 'file_name'   => null,
                 'file_type'   => null,
                 'file_size'   => null,
-                'uploaded_by' => (string) $partner->user_id,
+                'uploaded_by' => $partner->user_id,
             ]);
         }
     }

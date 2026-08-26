@@ -46,13 +46,13 @@ class TeacherController extends Controller
 
         // Batch load usernames — hindari N+1
         $userIds = $teachers->pluck('user_id')->filter()->unique()->values()->toArray();
-        $userMap = empty($userIds) ? collect() : User::whereIn('_id', $userIds)
-            ->get(['_id', 'username'])
-            ->keyBy(fn($u) => (string) $u->_id);
+        $userMap = empty($userIds) ? collect() : User::whereIn('id', $userIds)
+            ->get(['id', 'username'])
+            ->keyBy(fn($u) => (string) $u->id);
 
         return response()->json([
             'success' => true,
-            'data'    => $teachers->map(fn($t) => $this->formatTeacher($t, $userMap->get((string) ($t->user_id ?? '')))),
+            'data'    => $teachers->map(fn($t) => $this->formatTeacher($t, $userMap->get($t->user_id ?? ''))),
             'meta'    => [
                 'total'     => $total,
                 'page'      => $page,
@@ -99,7 +99,7 @@ class TeacherController extends Controller
 
         try {
             $teacher = Teacher::create([
-                'user_id'  => (string) $user->_id,
+                'user_id'   => $user->id,
                 'nama_guru' => $request->nama_guru,
                 'phone'     => $request->phone,
                 'email'     => $request->email ?? null,
@@ -150,7 +150,7 @@ class TeacherController extends Controller
             return response()->json(['success' => false, 'message' => 'Guru tidak ditemukan.'], 404);
         }
 
-        if ($request->filled('phone') && Teacher::where('phone', $request->phone)->where('_id', '!=', (string) $teacher->_id)->exists()) {
+        if ($request->filled('phone') && Teacher::where('phone', $request->phone)->where('id', '!=', $teacher->id)->exists()) {
             return response()->json(['success' => false, 'message' => 'Nomor telepon sudah digunakan guru lain.'], 409);
         }
 
@@ -162,10 +162,10 @@ class TeacherController extends Controller
 
         $userId = $teacher->user_id ?? null;
         if ($userId) {
-            if ($request->filled('username') && User::where('username', $request->username)->where('_id', '!=', $userId)->exists()) {
+            if ($request->filled('username') && User::where('username', $request->username)->where('id', '!=', $userId)->exists()) {
                 return response()->json(['success' => false, 'message' => 'Username sudah digunakan akun lain.'], 409);
             }
-            if ($request->filled('email') && User::where('email', $request->email)->where('_id', '!=', $userId)->exists()) {
+            if ($request->filled('email') && User::where('email', $request->email)->where('id', '!=', $userId)->exists()) {
                 return response()->json(['success' => false, 'message' => 'Email sudah digunakan akun lain.'], 409);
             }
         }
@@ -197,7 +197,7 @@ class TeacherController extends Controller
             return response()->json(['success' => false, 'message' => 'Guru tidak ditemukan.'], 404);
         }
 
-        $teacherId = (string) $teacher->_id;
+        $teacherId = $teacher->id;
 
         // Preserve data akademik: nullkan teacher_id agar riwayat siswa tidak hilang
         ProgressReport::where('teacher_id', $teacherId)->update(['teacher_id' => null]);
@@ -238,7 +238,7 @@ class TeacherController extends Controller
 
         Log::info('audit.password_reset', [
             'target'   => 'teacher',
-            'target_id' => (string) $teacher->_id,
+            'target_id' => $teacher->id,
             'user_id'  => $teacher->user_id ?? null,
             'by_admin' => auth()->id(),
             'ip'       => request()->ip(),
@@ -269,11 +269,11 @@ class TeacherController extends Controller
             return back()->withErrors(['auth' => 'User tidak ditemukan.']);
         }
 
-        if (User::where('username', $request->username)->where('_id', '!=', (string) $user->_id)->exists()) {
+        if (User::where('username', $request->username)->where('id', '!=', $user->id)->exists()) {
             return back()->withErrors(['username' => 'Username sudah digunakan.']);
         }
 
-        if ($request->filled('email') && User::where('email', $request->email)->where('_id', '!=', (string) $user->_id)->exists()) {
+        if ($request->filled('email') && User::where('email', $request->email)->where('id', '!=', $user->id)->exists()) {
             return back()->withErrors(['email' => 'Email sudah digunakan akun lain.']);
         }
 
@@ -329,7 +329,7 @@ class TeacherController extends Controller
     private function formatTeacher($doc, $user = null): array
     {
         return [
-            'id'           => (string) $doc->_id,
+            'id'           => $doc->id,
             'user_id'      => $doc->user_id ?? null,
             'username'     => $user?->username ?? null,
             'nama_guru'    => $doc->nama_guru ?? null,

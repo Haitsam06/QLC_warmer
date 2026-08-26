@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use MongoDB\BSON\Regex;
 
 class StudentController extends Controller
 {
@@ -27,10 +26,9 @@ class StudentController extends Controller
         $query = Student::query();
 
         if (!empty($search)) {
-            $regex = new Regex(preg_quote($search, '/'), 'i');
-            $query->where(function ($q) use ($regex) {
-                $q->where('nama', $regex)
-                  ->orWhere('tempat_lahir', $regex);
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', '%' . $search . '%')
+                  ->orWhere('tempat_lahir', 'like', '%' . $search . '%');
             });
         }
 
@@ -41,9 +39,9 @@ class StudentController extends Controller
         $students = $query->orderBy('nama')->skip($skip)->take($perPage)->get();
 
         $programIds = $students->pluck('program_id')->filter()->unique()->values();
-        $programs   = Program::whereIn('_id', $programIds->toArray())
+        $programs   = Program::whereIn('id', $programIds->toArray())
             ->get()
-            ->keyBy(fn($p) => (string) $p->_id);
+            ->keyBy(fn($p) => (string) $p->id);
 
         return response()->json([
             'success' => true,
@@ -60,8 +58,8 @@ class StudentController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'parent_id'         => 'required|string',
-            'program_id'        => 'required|string',
+            'parent_id'         => 'required',
+            'program_id'        => 'required',
             'nama'              => 'required|string|max:100',
             'usia'              => 'required|integer|min:1|max:30',
             'tempat_lahir'      => 'required|string|max:100',
@@ -73,7 +71,7 @@ class StudentController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        $parent = Parents::where('user_id', (string) $request->parent_id)->first();
+        $parent = Parents::where('user_id', $request->parent_id)->first();
         if (!$parent) {
             return response()->json(['success' => false, 'message' => 'Wali murid tidak ditemukan.'], 404);
         }
@@ -122,9 +120,9 @@ class StudentController extends Controller
         // Pre-load relasi agar format() tidak melakukan query individual (N+1)
         $programs = collect();
         if (!empty($student->program_id)) {
-            $programs = Program::whereIn('_id', [$student->program_id])
+            $programs = Program::whereIn('id', [$student->program_id])
                 ->get()
-                ->keyBy(fn($p) => (string) $p->_id);
+                ->keyBy(fn($p) => (string) $p->id);
         }
 
         return response()->json(['success' => true, 'data' => $this->format($student, $programs)]);
@@ -133,8 +131,8 @@ class StudentController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'parent_id'         => 'required|string',
-            'program_id'        => 'required|string',
+            'parent_id'         => 'required',
+            'program_id'        => 'required',
             'nama'              => 'required|string|max:100',
             'usia'              => 'required|integer|min:1|max:30',
             'tempat_lahir'      => 'required|string|max:100',
@@ -153,7 +151,7 @@ class StudentController extends Controller
 
         $oldStatus = $student->enrollment_status;
 
-        $parent = Parents::where('user_id', (string) $request->parent_id)->first();
+        $parent = Parents::where('user_id', $request->parent_id)->first();
         if (!$parent) {
             return response()->json(['success' => false, 'message' => 'Wali murid tidak ditemukan.'], 404);
         }
@@ -199,7 +197,7 @@ class StudentController extends Controller
             return response()->json(['success' => false, 'message' => 'Siswa tidak ditemukan.'], 404);
         }
 
-        $studentId = (string) $student->_id;
+        $studentId = $student->id;
 
         // Cascade: hapus semua laporan progress terkait siswa ini
         ProgressReport::where('student_id', $studentId)->delete();
@@ -229,18 +227,17 @@ class StudentController extends Controller
 
         $parentQuery = Parents::orderBy('parent_name');
         if ($search !== '') {
-            $regex = new Regex(preg_quote($search, '/'), 'i');
-            $parentQuery->where('parent_name', $regex);
+            $parentQuery->where('parent_name', 'like', '%' . $search . '%');
         }
 
         $parents = $parentQuery->limit(50)->get()->map(fn($p) => [
-            'id'    => (string) $p->user_id,
+            'id'    => $p->user_id,
             'label' => $p->parent_name . ' — ' . ($p->phone ?? ''),
         ]);
 
-        $programs = Program::orderBy('name')->get(['_id', 'name'])->map(fn($p) => [
-            'id'    => (string) $p->_id,
-            'label' => $p->name ?? (string) $p->_id,
+        $programs = Program::orderBy('name')->get(['id', 'name'])->map(fn($p) => [
+            'id'    => $p->id,
+            'label' => $p->name ?? (string) $p->id,
         ]);
 
         return response()->json([
@@ -256,7 +253,7 @@ class StudentController extends Controller
         $programName = ($programs && isset($programs[$pid])) ? ($programs[$pid]->name ?? null) : null;
 
         return [
-            'id'                => (string) $doc->_id,
+            'id'                => $doc->id,
             'parent_id'         => $doc->parent_id ?? null,
             'parent_name'       => $doc->parent_name ?? null,
             'program_id'        => $doc->program_id ?? null,

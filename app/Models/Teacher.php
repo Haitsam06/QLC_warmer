@@ -2,13 +2,11 @@
 
 namespace App\Models;
 
-use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class Teacher extends Model
 {
-    protected $connection = 'mongodb';
-
-    protected $collection = 'teachers';
+    protected $table = 'teachers';
 
     protected $fillable = [
         'user_id',
@@ -17,4 +15,9 @@ class Teacher extends Model
         'email',
         'bidang',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
