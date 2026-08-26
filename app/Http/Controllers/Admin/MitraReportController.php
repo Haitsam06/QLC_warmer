@@ -19,16 +19,15 @@ class MitraReportController extends Controller
         $query = Partner::query();
 
         if ($search !== '') {
-            $regex = new \MongoDB\BSON\Regex(preg_quote($search, '/'), 'i');
-            $query->where(function ($q) use ($regex) {
-                $q->where('institution_name', $regex)
-                  ->orWhere('contact_person', $regex);
+            $query->where(function ($q) use ($search) {
+                $q->where('institution_name', 'like', '%' . $search . '%')
+                  ->orWhere('contact_person', 'like', '%' . $search . '%');
             });
         }
 
         $partners = $query->orderBy('institution_name')->get();
 
-        $partnerIds  = $partners->map(fn($p) => (string) $p->_id)->toArray();
+        $partnerIds  = $partners->pluck('id')->map(fn($id) => (string) $id)->toArray();
         $reportCount = [];
 
         if (!empty($partnerIds)) {
@@ -41,7 +40,7 @@ class MitraReportController extends Controller
         }
 
         $data = $partners->map(function ($doc) use ($reportCount) {
-            $pid = (string) $doc->_id;
+            $pid = (string) $doc->id;
             return [
                 'id'               => $pid,
                 'institution_name' => $doc->institution_name ?? '—',
@@ -88,7 +87,7 @@ class MitraReportController extends Controller
         $fileName    = $safeBase . ($safeExt ? '.' . $safeExt : '');
 
         $report = MitraReport::create([
-            'partner_id'  => (string) $partner->_id,
+            'partner_id'  => $partner->id,
             'title'       => $request->title,
             'date'        => $request->date,
             'description' => $request->description ?? null,
@@ -97,10 +96,10 @@ class MitraReportController extends Controller
             'file_name'   => $fileName,
             'file_type'   => $safeExt,
             'file_size'   => $file->getSize(),
-            'uploaded_by' => (string) auth()->id(),
+            'uploaded_by' => auth()->id(),
         ]);
 
-        $mitraUserId = (string) ($partner->user_id ?? '');
+        $mitraUserId = $partner->user_id ?? null;
         if ($mitraUserId) {
             Notification::send(
                 $mitraUserId,
@@ -140,7 +139,7 @@ class MitraReportController extends Controller
             return response()->json(['message' => 'Profil mitra tidak ditemukan.'], 404);
         }
 
-        $partnerId = (string) $partner->_id;
+        $partnerId = $partner->id;
         $search    = trim($request->query('search', ''));
         $perPage   = max(1, min(100, (int) $request->query('per_page', 10)));
         $page      = max(1, (int) $request->query('page', 1));
@@ -149,8 +148,7 @@ class MitraReportController extends Controller
         $query = MitraReport::where('partner_id', $partnerId);
 
         if ($search !== '') {
-            $regex = new \MongoDB\BSON\Regex(preg_quote($search, '/'), 'i');
-            $query->where('title', $regex);
+            $query->where('title', 'like', '%' . $search . '%');
         }
 
         $total = $query->count();
@@ -178,8 +176,8 @@ class MitraReportController extends Controller
     private function formatReport($doc): array
     {
         return [
-            'id'          => (string) $doc->_id,
-            'partner_id'  => (string) ($doc->partner_id ?? ''),
+            'id'          => $doc->id,
+            'partner_id'  => $doc->partner_id ?? '',
             'title'       => $doc->title       ?? '—',
             'date'        => $doc->date         ?? null,
             'description' => $doc->description  ?? null,

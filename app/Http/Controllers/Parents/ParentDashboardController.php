@@ -16,18 +16,18 @@ class ParentDashboardController extends Controller
 {
     public function index(): Response
     {
-        $userId = (string) Auth::user()->_id;
+        $userId = Auth::user()->id;
 
         // ── Ambil semua anak ─────────────────────────────────
         $students   = Student::where('parent_id', $userId)->orderBy('created_at', 'desc')->get();
         $programIds = $students->pluck('program_id')->filter()->unique()->values()->toArray();
-        $programs   = Program::whereIn('_id', $programIds)->get()->keyBy(fn($p) => (string) $p->_id);
+        $programs   = Program::whereIn('id', $programIds)->get()->keyBy(fn($p) => (string) $p->id);
 
         $children = $students->map(function ($doc) use ($programs) {
             $pid         = $doc->program_id ?? null;
             $programName = $pid && isset($programs[(string) $pid]) ? ($programs[(string) $pid]->name ?? null) : null;
             return [
-                'id'                => (string) $doc->_id,
+                'id'                => $doc->id,
                 'nama'              => $doc->nama          ?? '',
                 'tempat_lahir'      => $doc->tempat_lahir  ?? '',
                 'tanggal_lahir'     => $doc->tanggal_lahir ?? '',
@@ -152,9 +152,9 @@ class ParentDashboardController extends Controller
 
     private function buildTeacherMap(array $ids): array
     {
-        return Teacher::whereIn('_id', $ids)
-            ->get(['_id', 'nama_guru'])
-            ->keyBy(fn($t) => (string) $t->_id)
+        return Teacher::whereIn('id', $ids)
+            ->get(['id', 'nama_guru'])
+            ->keyBy(fn($t) => (string) $t->id)
             ->map(fn($t) => $t->nama_guru ?? '—')
             ->toArray();
     }

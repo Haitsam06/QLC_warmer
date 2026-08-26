@@ -249,16 +249,16 @@ class ProgressReportController extends Controller
     {
         $students = Student::where('enrollment_status', 'active')
             ->orderBy('nama')
-            ->get(['_id', 'nama'])
-            ->map(fn($s) => ['id' => (string) $s->_id, 'label' => $s->nama]);
+            ->get(['id', 'nama'])
+            ->map(fn($s) => ['id' => $s->id, 'label' => $s->nama]);
 
         $teachers = Teacher::orderBy('nama_guru')
-            ->get(['_id', 'nama_guru'])
-            ->map(fn($t) => ['id' => (string) $t->_id, 'label' => $t->nama_guru ?? '—']);
+            ->get(['id', 'nama_guru'])
+            ->map(fn($t) => ['id' => $t->id, 'label' => $t->nama_guru ?? '—']);
 
         $programs = Program::orderBy('name')
-            ->get(['_id', 'name'])
-            ->map(fn($p) => ['id' => (string) $p->_id, 'label' => $p->name ?? '—']);
+            ->get(['id', 'name'])
+            ->map(fn($p) => ['id' => $p->id, 'label' => $p->name ?? '—']);
 
         return response()->json(compact('students', 'teachers', 'programs'));
     }
@@ -271,25 +271,24 @@ class ProgressReportController extends Controller
         $query = Student::where('enrollment_status', 'active');
 
         if ($search !== '') {
-            $regex = new \MongoDB\BSON\Regex(preg_quote($search, '/'), 'i');
-            $query->where('nama', $regex);
+            $query->where('nama', 'like', '%' . $search . '%');
         }
         if ($programId !== '') {
             $query->where('program_id', $programId);
         }
 
         $students   = $query->orderBy('nama')->get();
-        $studentIds = $students->map(fn($s) => (string) $s->_id)->toArray();
+        $studentIds = $students->pluck('id')->map(fn($id) => (string) $id)->toArray();
 
         $programMap    = $this->buildProgramMap($students);
         $lastReportMap = $this->buildLastReportMap($studentIds);
 
         $data = $students->map(function ($s) use ($programMap, $lastReportMap) {
-            $sid = (string) $s->_id;
+            $sid = (string) $s->id;
             return [
                 'id'         => $sid,
                 'nama'       => $s->nama ?? '',
-                'program'    => $programMap[$s->program_id ?? ''] ?? '—',
+                'program'    => $programMap[(string) ($s->program_id ?? '')] ?? '—',
                 'program_id' => $s->program_id ?? null,
                 'lastReport' => $lastReportMap[$sid] ?? null,
             ];
@@ -332,13 +331,12 @@ class ProgressReportController extends Controller
         if ($search !== '' || $programId !== '') {
             $sQuery = Student::where('enrollment_status', 'active');
             if ($search !== '') {
-                $regex = new \MongoDB\BSON\Regex(preg_quote($search, '/'), 'i');
-                $sQuery->where('nama', $regex);
+                $sQuery->where('nama', 'like', '%' . $search . '%');
             }
             if ($programId !== '') {
                 $sQuery->where('program_id', $programId);
             }
-            $studentIdFilter = $sQuery->get(['_id'])->map(fn($s) => (string) $s->_id)->toArray();
+            $studentIdFilter = $sQuery->get(['id'])->pluck('id')->map(fn($id) => (string) $id)->toArray();
 
             if (empty($studentIdFilter)) {
                 return response()->json([
@@ -552,8 +550,8 @@ class ProgressReportController extends Controller
     {
         $ids = $students->pluck('program_id')->filter()->unique()->values()->toArray();
         if (empty($ids)) return [];
-        return Program::whereIn('_id', $ids)->get()
-            ->keyBy(fn($p) => (string) $p->_id)
+        return Program::whereIn('id', $ids)->get()
+            ->keyBy(fn($p) => (string) $p->id)
             ->map(fn($p) => $p->name ?? '—')
             ->toArray();
     }
@@ -561,9 +559,9 @@ class ProgressReportController extends Controller
     private function buildStudentNameMap(array $studentIds): array
     {
         if (empty($studentIds)) return [];
-        return Student::whereIn('_id', $studentIds)
-            ->get(['_id', 'nama'])
-            ->keyBy(fn($s) => (string) $s->_id)
+        return Student::whereIn('id', $studentIds)
+            ->get(['id', 'nama'])
+            ->keyBy(fn($s) => (string) $s->id)
             ->map(fn($s) => $s->nama ?? '—')
             ->toArray();
     }
@@ -572,9 +570,9 @@ class ProgressReportController extends Controller
     {
         if (empty($teacherIds)) return [];
 
-        return Teacher::whereIn('_id', $teacherIds)
-            ->get(['_id', 'nama_guru'])
-            ->keyBy(fn($t) => (string) $t->_id)
+        return Teacher::whereIn('id', $teacherIds)
+            ->get(['id', 'nama_guru'])
+            ->keyBy(fn($t) => (string) $t->id)
             ->map(fn($t) => $t->nama_guru ?? '—')
             ->toArray();
     }
@@ -583,14 +581,14 @@ class ProgressReportController extends Controller
     {
         if (empty($studentIds)) return [];
 
-        $students   = Student::whereIn('_id', $studentIds)->get(['_id', 'program_id']);
-        $pidBySid   = $students->keyBy(fn($s) => (string) $s->_id)->map(fn($s) => $s->program_id)->toArray();
+        $students   = Student::whereIn('id', $studentIds)->get(['id', 'program_id']);
+        $pidBySid   = $students->keyBy(fn($s) => (string) $s->id)->map(fn($s) => $s->program_id)->toArray();
         $programIds = array_values(array_unique(array_filter(array_values($pidBySid))));
 
         $nameMap = [];
         if (!empty($programIds)) {
-            $nameMap = Program::whereIn('_id', $programIds)->get()
-                ->keyBy(fn($p) => (string) $p->_id)
+            $nameMap = Program::whereIn('id', $programIds)->get()
+                ->keyBy(fn($p) => (string) $p->id)
                 ->map(fn($p) => $p->name ?? '—')
                 ->toArray();
         }

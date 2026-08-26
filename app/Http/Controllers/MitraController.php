@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use MongoDB\BSON\Regex;
 
 class MitraController extends Controller
 {
@@ -29,11 +28,10 @@ class MitraController extends Controller
         $query = Partner::query();
 
         if ($search !== '') {
-            $regex = new Regex(preg_quote($search, '/'), 'i');
-            $query->where(function ($q) use ($regex) {
-                $q->where('institution_name', $regex)
-                  ->orWhere('contact_person', $regex)
-                  ->orWhere('phone', $regex);
+            $query->where(function ($q) use ($search) {
+                $q->where('institution_name', 'like', '%' . $search . '%')
+                  ->orWhere('contact_person', 'like', '%' . $search . '%')
+                  ->orWhere('phone', 'like', '%' . $search . '%');
             });
         }
 
@@ -45,9 +43,9 @@ class MitraController extends Controller
         $partners = $query->orderBy('institution_name')->skip($skip)->take($perPage)->get();
 
         $userIds = $partners->pluck('user_id')->filter()->unique()->values()->toArray();
-        $userMap = empty($userIds) ? collect() : User::whereIn('_id', $userIds)
-            ->get(['_id', 'username', 'email'])
-            ->keyBy(fn($u) => (string) $u->_id);
+        $userMap = empty($userIds) ? collect() : User::whereIn('id', $userIds)
+            ->get(['id', 'username', 'email'])
+            ->keyBy(fn($u) => (string) $u->id);
 
         return response()->json([
             'success' => true,
@@ -117,7 +115,7 @@ class MitraController extends Controller
 
         try {
             $partner = Partner::create([
-                'user_id'          => (string) $user->_id,
+                'user_id'          => $user->id,
                 'institution_name' => $request->institution_name,
                 'contact_person'   => $request->contact_person,
                 'phone'            => $request->phone,
@@ -161,16 +159,16 @@ class MitraController extends Controller
             return response()->json(['success' => false, 'message' => 'Mitra tidak ditemukan.'], 404);
         }
 
-        if ($request->filled('phone') && Partner::where('phone', $request->phone)->where('_id', '!=', (string) $partner->_id)->exists()) {
+        if ($request->filled('phone') && Partner::where('phone', $request->phone)->where('id', '!=', $partner->id)->exists()) {
             return response()->json(['success' => false, 'message' => 'Nomor telepon sudah digunakan mitra lain.'], 409);
         }
 
         $userId = $partner->user_id ?? null;
         if ($userId) {
-            if ($request->filled('username') && User::where('username', $request->username)->where('_id', '!=', $userId)->exists()) {
+            if ($request->filled('username') && User::where('username', $request->username)->where('id', '!=', $userId)->exists()) {
                 return response()->json(['success' => false, 'message' => 'Username sudah digunakan akun lain.'], 409);
             }
-            if ($request->filled('email') && User::where('email', $request->email)->where('_id', '!=', $userId)->exists()) {
+            if ($request->filled('email') && User::where('email', $request->email)->where('id', '!=', $userId)->exists()) {
                 return response()->json(['success' => false, 'message' => 'Email sudah digunakan akun lain.'], 409);
             }
         }
@@ -232,7 +230,7 @@ class MitraController extends Controller
 
         Log::info('audit.password_reset', [
             'target'    => 'mitra',
-            'target_id' => (string) $partner->_id,
+            'target_id' => $partner->id,
             'user_id'   => $partner->user_id ?? null,
             'by_admin'  => auth()->id(),
             'ip'        => request()->ip(),
@@ -260,7 +258,7 @@ class MitraController extends Controller
         }
 
         // Cascade: hapus semua laporan mitra beserta file-nya
-        MitraReport::where('partner_id', (string) $partner->_id)->each(function ($report) {
+        MitraReport::where('partner_id', $partner->id)->each(function ($report) {
             if (!empty($report->file_path)) {
                 Storage::disk('public')->delete($report->file_path);
             }
@@ -274,7 +272,7 @@ class MitraController extends Controller
         }
 
         Log::info('audit.mitra_deleted', [
-            'partner_id'       => (string) $partner->_id,
+            'partner_id'       => $partner->id,
             'institution_name' => $partner->institution_name ?? '—',
             'by_admin'         => auth()->id(),
             'ip'               => request()->ip(),
@@ -285,7 +283,7 @@ class MitraController extends Controller
 
     public function ownProfile()
     {
-        $userId  = (string) Auth::id();
+        $userId  = Auth::id();
         $user    = Auth::user();
         $partner = Partner::where('user_id', $userId)->first();
 
@@ -322,11 +320,11 @@ class MitraController extends Controller
             return back()->withErrors(['auth' => 'User tidak ditemukan.']);
         }
 
-        if (User::where('username', $request->username)->where('_id', '!=', (string) $user->_id)->exists()) {
+        if (User::where('username', $request->username)->where('id', '!=', $user->id)->exists()) {
             return back()->withErrors(['username' => 'Username sudah digunakan.']);
         }
 
-        if ($request->filled('email') && User::where('email', $request->email)->where('_id', '!=', (string) $user->_id)->exists()) {
+        if ($request->filled('email') && User::where('email', $request->email)->where('id', '!=', $user->id)->exists()) {
             return back()->withErrors(['email' => 'Email sudah digunakan akun lain.']);
         }
 
@@ -374,7 +372,7 @@ class MitraController extends Controller
     private function format($doc, $user = null): array
     {
         return [
-            'id'               => (string) $doc->_id,
+            'id'               => $doc->id,
             'user_id'          => $doc->user_id ?? null,
             'username'         => $user?->username ?? null,
             'email'            => $user?->email ?? null,

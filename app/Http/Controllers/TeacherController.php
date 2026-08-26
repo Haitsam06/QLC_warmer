@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use MongoDB\BSON\Regex;
 
 class TeacherController extends Controller
 {
@@ -29,11 +28,10 @@ class TeacherController extends Controller
         $query = Teacher::query();
 
         if (!empty($search)) {
-            $regex = new Regex(preg_quote($search, '/'), 'i');
-            $query->where(function ($q) use ($regex) {
-                $q->where('nama_guru', $regex)
-                  ->orWhere('phone', $regex)
-                  ->orWhere('bidang', $regex);
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_guru', 'like', '%' . $search . '%')
+                  ->orWhere('phone', 'like', '%' . $search . '%')
+                  ->orWhere('bidang', 'like', '%' . $search . '%');
             });
         }
 

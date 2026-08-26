@@ -72,7 +72,7 @@ class AdminDashboardController extends Controller
             ->map(function ($a) {
                 $eventDate = Carbon::parse($a->event_date);
                 return [
-                    'id'    => (string) $a->_id,
+                    'id'    => $a->id,
                     'title' => $a->title ?? '—',
                     'date'  => $eventDate->format('d M Y'),
                     'type'  => $this->classifyAgenda($eventDate),
@@ -90,14 +90,14 @@ class AdminDashboardController extends Controller
             ->get();
 
         $programIds = $students->pluck('program_id')->filter()->unique()->values();
-        $programs   = Program::whereIn('_id', $programIds->toArray())
+        $programs   = Program::whereIn('id', $programIds->toArray())
             ->get()
-            ->keyBy(fn($p) => (string) $p->_id);
+            ->keyBy(fn($p) => (string) $p->id);
 
         $data = $students->map(function ($doc) use ($programs) {
             $pid = (string) ($doc->program_id ?? '');
             return [
-                'id'   => (string) $doc->_id,
+                'id'   => $doc->id,
                 'nama' => $doc->nama ?? '—',
                 'prog' => isset($programs[$pid]) ? ($programs[$pid]->name ?? '—') : '—',
                 'date' => $doc->created_at ? $doc->created_at->format('d M') : '—',
@@ -131,9 +131,9 @@ class AdminDashboardController extends Controller
         }
 
         $studentIds = $reports->pluck('student_id')->filter()->unique()->values();
-        $students   = Student::whereIn('_id', $studentIds->toArray())
-            ->get(['_id', 'nama'])
-            ->keyBy(fn($s) => (string) $s->_id);
+        $students   = Student::whereIn('id', $studentIds->toArray())
+            ->get(['id', 'nama'])
+            ->keyBy(fn($s) => (string) $s->id);
 
         $qualityOrder = ['sangat_lancar' => 0, 'lancar' => 1, 'mengulang' => 2];
 
@@ -142,7 +142,7 @@ class AdminDashboardController extends Controller
             ->map(function ($r) use ($students) {
                 $sid = (string) $r->student_id;
                 return [
-                    'id'          => (string) $r->_id,
+                    'id'          => $r->id,
                     'student_id'  => $sid,
                     'nama'        => $students[$sid]->nama ?? '—',
                     'capaian'     => $r->hafalan_achievement ?? $r->hafalan_target ?? '—',

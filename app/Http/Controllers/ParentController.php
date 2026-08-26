@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use MongoDB\BSON\Regex;
 
 class ParentController extends Controller
 {
@@ -29,11 +28,10 @@ class ParentController extends Controller
         $query = Parents::query();
 
         if (!empty($search)) {
-            $regex = new Regex(preg_quote($search, '/'), 'i');
-            $query->where(function ($q) use ($regex) {
-                $q->where('parent_name', $regex)
-                  ->orWhere('phone', $regex)
-                  ->orWhere('address', $regex);
+            $query->where(function ($q) use ($search) {
+                $q->where('parent_name', 'like', '%' . $search . '%')
+                  ->orWhere('phone', 'like', '%' . $search . '%')
+                  ->orWhere('address', 'like', '%' . $search . '%');
             });
         }
 
@@ -41,9 +39,9 @@ class ParentController extends Controller
         $parents = $query->orderBy('parent_name')->skip($skip)->take($perPage)->get();
 
         $userIds = $parents->pluck('user_id')->filter()->unique()->values()->toArray();
-        $userMap = empty($userIds) ? collect() : User::whereIn('_id', $userIds)
-            ->get(['_id', 'username', 'email'])
-            ->keyBy(fn($u) => (string) $u->_id);
+        $userMap = empty($userIds) ? collect() : User::whereIn('id', $userIds)
+            ->get(['id', 'username', 'email'])
+            ->keyBy(fn($u) => (string) $u->id);
 
         return response()->json([
             'success' => true,
@@ -94,7 +92,7 @@ class ParentController extends Controller
 
         try {
             $parent = Parents::create([
-                'user_id'     => (string) $user->_id,
+                'user_id'     => $user->id,
                 'parent_name' => $request->parent_name,
                 'phone'       => $request->phone,
                 'address'     => $request->address,
@@ -143,7 +141,7 @@ class ParentController extends Controller
             return response()->json(['success' => false, 'message' => 'Wali murid tidak ditemukan.'], 404);
         }
 
-        if ($request->filled('phone') && Parents::where('phone', $request->phone)->where('_id', '!=', (string) $parent->_id)->exists()) {
+        if ($request->filled('phone') && Parents::where('phone', $request->phone)->where('id', '!=', $parent->id)->exists()) {
             return response()->json(['success' => false, 'message' => 'Nomor telepon sudah digunakan wali murid lain.'], 409);
         }
 
@@ -155,10 +153,10 @@ class ParentController extends Controller
 
         $userId = $parent->user_id ?? null;
         if ($userId) {
-            if ($request->filled('username') && User::where('username', $request->username)->where('_id', '!=', $userId)->exists()) {
+            if ($request->filled('username') && User::where('username', $request->username)->where('id', '!=', $userId)->exists()) {
                 return response()->json(['success' => false, 'message' => 'Username sudah digunakan akun lain.'], 409);
             }
-            if ($request->filled('email') && User::where('email', $request->email)->where('_id', '!=', $userId)->exists()) {
+            if ($request->filled('email') && User::where('email', $request->email)->where('id', '!=', $userId)->exists()) {
                 return response()->json(['success' => false, 'message' => 'Email sudah digunakan akun lain.'], 409);
             }
         }
@@ -200,11 +198,11 @@ class ParentController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        if (User::where('username', $request->username)->where('_id', '!=', (string) $user->_id)->exists()) {
+        if (User::where('username', $request->username)->where('id', '!=', $user->id)->exists()) {
             return back()->withErrors(['username' => 'Username sudah digunakan.']);
         }
 
-        if ($request->email && User::where('email', $request->email)->where('_id', '!=', (string) $user->_id)->exists()) {
+        if ($request->email && User::where('email', $request->email)->where('id', '!=', $user->id)->exists()) {
             return back()->withErrors(['email' => 'Email sudah digunakan.']);
         }
 
@@ -252,7 +250,7 @@ class ParentController extends Controller
 
         Log::info('audit.password_reset', [
             'target'    => 'parent',
-            'target_id' => (string) $parent->_id,
+            'target_id' => $parent->id,
             'user_id'   => $parent->user_id ?? null,
             'by_admin'  => auth()->id(),
             'ip'        => request()->ip(),
@@ -274,8 +272,8 @@ class ParentController extends Controller
         }
 
         // Cascade: hapus semua student + progress report milik parent ini
-        Student::where('parent_id', (string) $parent->user_id)->each(function ($student) {
-            ProgressReport::where('student_id', (string) $student->_id)->delete();
+        Student::where('parent_id', $parent->user_id)->each(function ($student) {
+            ProgressReport::where('student_id', $student->id)->delete();
             if (!empty($student->bukti_pembayaran)) {
                 $parsed = parse_url($student->bukti_pembayaran, PHP_URL_PATH);
                 if ($parsed) {
@@ -292,7 +290,7 @@ class ParentController extends Controller
         }
 
         Log::info('audit.parent_deleted', [
-            'parent_id'   => (string) $parent->_id,
+            'parent_id'   => $parent->id,
             'parent_name' => $parent->parent_name ?? '—',
             'by_admin'    => auth()->id(),
             'ip'          => request()->ip(),
@@ -322,7 +320,7 @@ class ParentController extends Controller
     private function format($doc, $user = null): array
     {
         return [
-            'id'          => (string) $doc->_id,
+            'id'          => $doc->id,
             'user_id'     => $doc->user_id ?? null,
             'username'    => $user?->username ?? null,
             'email'       => $user?->email ?? null,
