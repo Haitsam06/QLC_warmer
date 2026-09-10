@@ -102,14 +102,14 @@ class AgendaController extends Controller
             ], 422);
         }
 
-        $agenda = Agenda::where('_id', $id)->orWhere('id', $id)->first();
+        $agenda = Agenda::find($id);
 
         if (!$agenda) {
             return response()->json(['success' => false, 'message' => 'Agenda tidak ditemukan.'], 404);
         }
 
         $user = auth()->user()->loadMissing('role');
-        $userId = (string) ($user->_id ?? $user->id ?? '');
+        $userId = (string) ($user->id ?? $user->_id ?? '');
         if ($user->getRoleName() !== 'admin' && (string) ($agenda->user_id ?? '') !== $userId) {
             return response()->json(['success' => false, 'message' => 'Anda tidak berhak mengubah agenda ini.'], 403);
         }
@@ -132,14 +132,14 @@ class AgendaController extends Controller
 
     public function destroy(string $id)
     {
-        $agenda = Agenda::where('_id', $id)->orWhere('id', $id)->first();
+        $agenda = Agenda::find($id);
 
         if (!$agenda) {
             return response()->json(['success' => false, 'message' => 'Agenda tidak ditemukan.'], 404);
         }
 
         $user = auth()->user()->loadMissing('role');
-        $userId = (string) ($user->_id ?? $user->id ?? '');
+        $userId = (string) ($user->id ?? $user->_id ?? '');
         if ($user->getRoleName() !== 'admin' && (string) ($agenda->user_id ?? '') !== $userId) {
             return response()->json(['success' => false, 'message' => 'Anda tidak berhak menghapus agenda ini.'], 403);
         }
@@ -152,7 +152,7 @@ class AgendaController extends Controller
     private function format($doc): array
     {
         return [
-            'id'                => (string) ($doc->_id ?? $doc->id),
+            'id'                => (string) ($doc->id ?? $doc->_id),
             'user_id'           => $doc->user_id ?? null,
             'title'             => $doc->title,
             'event_date'        => $doc->event_date,
