@@ -18,6 +18,34 @@ class TeacherController extends Controller
 
     public function index(Request $request)
     {
+        // Auto-provision profile jika tabel teachers kosong tapi akun user guru sudah ada di DB
+        if (Teacher::count() === 0 && User::where('role_id', self::ROLE_TEACHER)->exists()) {
+            $teacherDefaults = [
+                'guru1' => ['nama_guru' => 'Ahmad Fauzan',   'bidang' => 'Tahfidz', 'phone' => '081200001111'],
+                'guru2' => ['nama_guru' => 'Siti Fatimah',    'bidang' => 'Tilawah', 'phone' => '081200002222'],
+                'guru3' => ['nama_guru' => 'Muhammad Ridwan', 'bidang' => 'Yanbua',  'phone' => '081200003333'],
+                'guru4' => ['nama_guru' => 'Nur Halimah',     'bidang' => 'Tahfidz', 'phone' => '081200004444'],
+                'guru5' => ['nama_guru' => 'Hasan Basri',     'bidang' => 'Tilawah', 'phone' => '081200005555'],
+            ];
+
+            foreach (User::where('role_id', self::ROLE_TEACHER)->get() as $u) {
+                if (!Teacher::where('user_id', $u->id)->exists()) {
+                    $meta = $teacherDefaults[$u->username] ?? [
+                        'nama_guru' => ucfirst($u->username),
+                        'bidang'    => 'Tahfidz',
+                        'phone'     => '0812' . str_pad((string) $u->id, 8, '0', STR_PAD_LEFT),
+                    ];
+                    Teacher::create([
+                        'user_id'   => $u->id,
+                        'nama_guru' => $meta['nama_guru'],
+                        'bidang'    => $meta['bidang'],
+                        'phone'     => $meta['phone'],
+                        'email'     => $u->email,
+                    ]);
+                }
+            }
+        }
+
         $search       = $request->query('search', '');
         $spesialisasi = $request->query('spesialisasi', '');
         $perPage      = max(1, min(100, (int) $request->query('per_page', 10)));

@@ -19,6 +19,34 @@ class MitraController extends Controller
 
     public function index(Request $request)
     {
+        // Auto-provision profile jika tabel partners kosong tapi akun user mitra sudah ada di DB
+        if (Partner::count() === 0 && User::where('role_id', self::ROLE_MITRA)->exists()) {
+            $mitraDefaults = [
+                'mitra1' => ['institution_name' => 'Yayasan Bina Insani',          'contact_person' => 'Dr. Hendra Wijaya',   'phone' => '083100001111', 'address' => 'Jl. Gatot Subroto No. 45, Jakarta'],
+                'mitra2' => ['institution_name' => 'Pesantren Al-Ikhlas',          'contact_person' => 'Ust. Zainal Arifin',  'phone' => '083100002222', 'address' => 'Jl. Raya Bogor Km 30, Depok'],
+                'mitra3' => ['institution_name' => 'Lembaga Pendidikan Al-Azhar', 'contact_person' => 'Dra. Hj. Nurul Huda', 'phone' => '083100003333', 'address' => 'Jl. Kemang Raya No. 12, Jakarta'],
+            ];
+
+            foreach (User::where('role_id', self::ROLE_MITRA)->get() as $u) {
+                if (!Partner::where('user_id', $u->id)->exists()) {
+                    $meta = $mitraDefaults[$u->username] ?? [
+                        'institution_name' => 'Mitra ' . ucfirst($u->username),
+                        'contact_person'   => 'PIC ' . ucfirst($u->username),
+                        'phone'            => '0831' . str_pad((string) $u->id, 8, '0', STR_PAD_LEFT),
+                        'address'          => 'Jl. Kemitraan No. 1',
+                    ];
+                    Partner::create([
+                        'user_id'          => $u->id,
+                        'institution_name' => $meta['institution_name'],
+                        'contact_person'   => $meta['contact_person'],
+                        'phone'            => $meta['phone'],
+                        'address'          => $meta['address'],
+                        'status'           => 'Active',
+                    ]);
+                }
+            }
+        }
+
         $page    = max(1, (int) $request->query('page', 1));
         $perPage = max(1, min(50, (int) $request->query('per_page', 10)));
         $search  = trim($request->query('search', ''));
@@ -29,9 +57,9 @@ class MitraController extends Controller
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
-                $q->where('institution_name', 'like', '%' . $search . '%')
-                  ->orWhere('contact_person', 'like', '%' . $search . '%')
-                  ->orWhere('phone', 'like', '%' . $search . '%');
+                $q->where('institution_name', 'ilike', '%' . $search . '%')
+                  ->orWhere('contact_person', 'ilike', '%' . $search . '%')
+                  ->orWhere('phone', 'ilike', '%' . $search . '%');
             });
         }
 

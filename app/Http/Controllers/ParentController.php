@@ -20,6 +20,33 @@ class ParentController extends Controller
 
     public function index(Request $request)
     {
+        // Auto-provision profile jika tabel parents kosong tapi akun user wali sudah ada di DB
+        if (Parents::count() === 0 && User::where('role_id', self::ROLE_PARENT)->exists()) {
+            $parentDefaults = [
+                'wali1' => ['parent_name' => 'Budi Santoso', 'phone' => '082100001111', 'address' => 'Jl. Mawar No. 1, Bekasi'],
+                'wali2' => ['parent_name' => 'Sri Wahyuni',   'phone' => '082100002222', 'address' => 'Jl. Melati No. 5, Bekasi'],
+                'wali3' => ['parent_name' => 'Ahmad Mukhlas', 'phone' => '082100003333', 'address' => 'Jl. Anggrek No. 10, Depok'],
+                'wali4' => ['parent_name' => 'Dewi Rahayu',   'phone' => '082100004444', 'address' => 'Jl. Kenanga No. 3, Bogor'],
+                'wali5' => ['parent_name' => 'Eko Prasetyo',  'phone' => '082100005555', 'address' => 'Jl. Dahlia No. 7, Tangerang'],
+            ];
+
+            foreach (User::where('role_id', self::ROLE_PARENT)->get() as $u) {
+                if (!Parents::where('user_id', $u->id)->exists()) {
+                    $meta = $parentDefaults[$u->username] ?? [
+                        'parent_name' => ucfirst($u->username),
+                        'phone'       => '0821' . str_pad((string) $u->id, 8, '0', STR_PAD_LEFT),
+                        'address'     => 'Jl. QLC No. 1',
+                    ];
+                    Parents::create([
+                        'user_id'     => $u->id,
+                        'parent_name' => $meta['parent_name'],
+                        'phone'       => $meta['phone'],
+                        'address'     => $meta['address'],
+                    ]);
+                }
+            }
+        }
+
         $search  = $request->query('search', '');
         $perPage = max(1, min(100, (int) $request->query('per_page', 10)));
         $page    = (int) $request->query('page', 1);
@@ -29,9 +56,9 @@ class ParentController extends Controller
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('parent_name', 'like', '%' . $search . '%')
-                  ->orWhere('phone', 'like', '%' . $search . '%')
-                  ->orWhere('address', 'like', '%' . $search . '%');
+                $q->where('parent_name', 'ilike', '%' . $search . '%')
+                  ->orWhere('phone', 'ilike', '%' . $search . '%')
+                  ->orWhere('address', 'ilike', '%' . $search . '%');
             });
         }
 
