@@ -19,6 +19,9 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         if (! Auth::check()) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['success' => false, 'message' => 'Unauthenticated.'], 401);
+            }
             return redirect()->route('login');
         }
 
@@ -27,6 +30,9 @@ class RoleMiddleware
         $roleName = $user->getRoleName();
 
         if (! in_array($roleName, $roles)) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized. Anda tidak memiliki akses ke resource ini.'], 403);
+            }
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
