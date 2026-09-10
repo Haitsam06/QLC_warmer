@@ -26,7 +26,7 @@ class AgendaController extends Controller
         $month      = (int) $request->query('month', date('n'));
         $visibility = $request->query('visibility', 'all');
 
-        $last  = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+        $last  = (int) date('t', strtotime(sprintf('%04d-%02d-01', $year, $month)));
         $start = sprintf('%04d-%02d-01', $year, $month);
         $end   = sprintf('%04d-%02d-%02d', $year, $month, $last);
 
@@ -60,11 +60,21 @@ class AgendaController extends Controller
         $validator = Validator::make($request->all(), $this->validationRules());
 
         if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $userId = null;
+        if (auth()->check()) {
+            $user = auth()->user();
+            $userId = (string) ($user->_id ?? $user->id ?? '');
         }
 
         $agenda = Agenda::create([
-            'user_id'           => auth()->check() ? (string) auth()->user()->_id : null,
+            'user_id'           => $userId ?: null,
             'title'             => $request->title,
             'event_date'        => $request->event_date,
             'description'       => $request->description ?? '',
@@ -85,17 +95,22 @@ class AgendaController extends Controller
         $validator = Validator::make($request->all(), $this->validationRules());
 
         if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors(),
+            ], 422);
         }
 
-        $agenda = Agenda::find($id);
+        $agenda = Agenda::where('_id', $id)->orWhere('id', $id)->first();
 
         if (!$agenda) {
             return response()->json(['success' => false, 'message' => 'Agenda tidak ditemukan.'], 404);
         }
 
         $user = auth()->user()->loadMissing('role');
-        if ($user->getRoleName() !== 'admin' && (string) ($agenda->user_id ?? '') !== (string) $user->_id) {
+        $userId = (string) ($user->_id ?? $user->id ?? '');
+        if ($user->getRoleName() !== 'admin' && (string) ($agenda->user_id ?? '') !== $userId) {
             return response()->json(['success' => false, 'message' => 'Anda tidak berhak mengubah agenda ini.'], 403);
         }
 
@@ -117,14 +132,15 @@ class AgendaController extends Controller
 
     public function destroy(string $id)
     {
-        $agenda = Agenda::find($id);
+        $agenda = Agenda::where('_id', $id)->orWhere('id', $id)->first();
 
         if (!$agenda) {
             return response()->json(['success' => false, 'message' => 'Agenda tidak ditemukan.'], 404);
         }
 
         $user = auth()->user()->loadMissing('role');
-        if ($user->getRoleName() !== 'admin' && (string) ($agenda->user_id ?? '') !== (string) $user->_id) {
+        $userId = (string) ($user->_id ?? $user->id ?? '');
+        if ($user->getRoleName() !== 'admin' && (string) ($agenda->user_id ?? '') !== $userId) {
             return response()->json(['success' => false, 'message' => 'Anda tidak berhak menghapus agenda ini.'], 403);
         }
 
@@ -136,7 +152,7 @@ class AgendaController extends Controller
     private function format($doc): array
     {
         return [
-            'id'                => (string) $doc->_id,
+            'id'                => (string) ($doc->_id ?? $doc->id),
             'user_id'           => $doc->user_id ?? null,
             'title'             => $doc->title,
             'event_date'        => $doc->event_date,
@@ -148,3 +164,4 @@ class AgendaController extends Controller
         ];
     }
 }
+

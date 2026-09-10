@@ -411,33 +411,78 @@ export default function AgendaPage() {
 
     /* CRUD */
     const handleAdd = async (f: FormState) => {
-        const res = await fetch(`${BASE}/agenda`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f) });
-        const data = await res.json();
-        if (data.success) {
-            showToast('Agenda berhasil ditambahkan.');
-            setAddModal(null);
-            await load();
-        } else showToast(data.message ?? 'Gagal menyimpan.', 'err');
+        try {
+            const res = await fetch(`${BASE}/agenda`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify(f),
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Agenda berhasil ditambahkan.', 'ok');
+                setAddModal(null);
+                await load();
+            } else if (data.errors) {
+                const firstErr = Object.values(data.errors as Record<string, string[]>)[0]?.[0];
+                showToast(firstErr ?? 'Validasi gagal.', 'err');
+            } else {
+                showToast(data.message ?? 'Gagal menyimpan.', 'err');
+            }
+        } catch {
+            showToast('Terjadi kesalahan koneksi saat menyimpan agenda.', 'err');
+        }
     };
 
     const handleEdit = async (f: FormState) => {
-        const res = await fetch(`${BASE}/agenda/${editModal!.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f) });
-        const data = await res.json();
-        if (data.success) {
-            showToast('Agenda berhasil diperbarui.');
-            setEditModal(null);
-            await load();
-        } else showToast(data.message ?? 'Gagal memperbarui.', 'err');
+        if (!editModal?.id) return;
+        try {
+            const res = await fetch(`${BASE}/agenda/${editModal.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify(f),
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Agenda berhasil diperbarui.', 'ok');
+                setEditModal(null);
+                await load();
+            } else if (data.errors) {
+                const firstErr = Object.values(data.errors as Record<string, string[]>)[0]?.[0];
+                showToast(firstErr ?? 'Validasi gagal.', 'err');
+            } else {
+                showToast(data.message ?? 'Gagal memperbarui.', 'err');
+            }
+        } catch {
+            showToast('Terjadi kesalahan koneksi saat memperbarui agenda.', 'err');
+        }
     };
 
     const handleDelete = async () => {
-        const res = await fetch(`${BASE}/agenda/${delModal!.id}`, { method: 'DELETE' });
-        const data = await res.json();
-        if (data.success) {
-            showToast('Agenda berhasil dihapus.');
-            setDelModal(null);
-            await load();
-        } else showToast(data.message ?? 'Gagal menghapus.', 'err');
+        if (!delModal?.id) return;
+        try {
+            const res = await fetch(`${BASE}/agenda/${delModal.id}`, {
+                method: 'DELETE',
+                headers: {
+                    Accept: 'application/json',
+                },
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Agenda berhasil dihapus.', 'ok');
+                setDelModal(null);
+                await load();
+            } else {
+                showToast(data.message ?? 'Gagal menghapus.', 'err');
+            }
+        } catch {
+            showToast('Terjadi kesalahan koneksi saat menghapus agenda.', 'err');
+        }
     };
 
     return (

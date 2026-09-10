@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasPostgresIdAlias;
 use Illuminate\Database\Eloquent\Model;
 
 class Agenda extends Model
 {
+    use HasPostgresIdAlias;
+
     protected $table = 'agenda';
 
     protected $fillable = [
