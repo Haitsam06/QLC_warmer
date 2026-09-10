@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 class TeacherController extends Controller
 {
@@ -29,9 +28,9 @@ class TeacherController extends Controller
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('nama_guru', 'like', '%' . $search . '%')
-                  ->orWhere('phone', 'like', '%' . $search . '%')
-                  ->orWhere('bidang', 'like', '%' . $search . '%');
+                $q->where('nama_guru', 'ilike', '%' . $search . '%')
+                  ->orWhere('phone', 'ilike', '%' . $search . '%')
+                  ->orWhere('bidang', 'ilike', '%' . $search . '%');
             });
         }
 
@@ -45,12 +44,12 @@ class TeacherController extends Controller
         // Batch load usernames — hindari N+1
         $userIds = $teachers->pluck('user_id')->filter()->unique()->values()->toArray();
         $userMap = empty($userIds) ? collect() : User::whereIn('id', $userIds)
-            ->get(['id', 'username'])
+            ->get(['id', 'username', 'email'])
             ->keyBy(fn($u) => (string) $u->id);
 
         return response()->json([
             'success' => true,
-            'data'    => $teachers->map(fn($t) => $this->formatTeacher($t, $userMap->get($t->user_id ?? ''))),
+            'data'    => $teachers->map(fn($t) => $this->formatTeacher($t, $userMap->get((string) ($t->user_id ?? '')))),
             'meta'    => [
                 'total'     => $total,
                 'page'      => $page,
@@ -63,56 +62,68 @@ class TeacherController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nama_guru'    => 'nullable|string|max:100',
-            'phone'        => 'nullable|string|max:20',
-            'spesialisasi' => 'nullable|string|max:100',
+            'nama_guru'    => 'required|string|max:100',
+            'phone'        => 'required|string|max:20',
+            'spesialisasi' => 'required|string|max:100',
             'username'     => 'required|string|min:4|max:50|alpha_num',
             'password'     => 'required|string|min:8|max:100',
             'email'        => 'nullable|email|max:100',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors(),
+            ], 422);
         }
 
         if (User::where('username', $request->username)->exists()) {
             return response()->json(['success' => false, 'message' => 'Username sudah digunakan.'], 409);
         }
 
-        if ($request->email && User::where('email', $request->email)->exists()) {
-            return response()->json(['success' => false, 'message' => 'Email sudah digunakan.'], 409);
+        $email = $request->filled('email') ? $request->email : (strtolower($request->username) . '@qlc.id');
+
+        if (User::where('email', $email)->exists()) {
+            return response()->json(['success' => false, 'message' => 'Email sudah digunakan akun lain.'], 409);
         }
 
-        if ($request->phone && Teacher::where('phone', $request->phone)->exists()) {
-            return response()->json(['success' => false, 'message' => 'Nomor telepon sudah terdaftar.'], 409);
+        if ($request->filled('phone') && Teacher::where('phone', $request->phone)->exists()) {
+            return response()->json(['success' => false, 'message' => 'Nomor telepon sudah terdaftar pada guru lain.'], 409);
         }
-
-        $user = User::create([
-            'role_id'  => self::ROLE_TEACHER,
-            'username' => $request->username,
-            'password' => Hash::make($request->password),
-            'email'    => $request->email ?? null,
-            'photo'    => null,
-        ]);
 
         try {
+            $user = User::create([
+                'role_id'  => self::ROLE_TEACHER,
+                'username' => $request->username,
+                'password' => Hash::make($request->password),
+                'email'    => $email,
+                'photo'    => null,
+            ]);
+
             $teacher = Teacher::create([
                 'user_id'   => $user->id,
                 'nama_guru' => $request->nama_guru,
                 'phone'     => $request->phone,
-                'email'     => $request->email ?? null,
+                'email'     => $request->filled('email') ? $request->email : null,
                 'bidang'    => $request->spesialisasi,
             ]);
-        } catch (\Exception $e) {
-            $user->delete();
-            return response()->json(['success' => false, 'message' => 'Gagal menyimpan data guru.'], 500);
-        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Guru berhasil ditambahkan.',
-            'data'    => $this->formatTeacher($teacher, $user),
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Guru & akun berhasil ditambahkan.',
+                'data'    => $this->formatTeacher($teacher, $user),
+            ], 201);
+        } catch (\Exception $e) {
+            if (isset($user) && $user->exists) {
+                $user->delete();
+            }
+            Log::error('Teacher store error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan data guru: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function show(string $id)
@@ -139,7 +150,11 @@ class TeacherController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors(),
+            ], 422);
         }
 
         $teacher = Teacher::find($id);
@@ -156,22 +171,21 @@ class TeacherController extends Controller
         if ($request->filled('nama_guru'))    $teacherUpdate['nama_guru'] = $request->nama_guru;
         if ($request->filled('phone'))        $teacherUpdate['phone']     = $request->phone;
         if ($request->filled('spesialisasi')) $teacherUpdate['bidang']    = $request->spesialisasi;
+        if ($request->has('email'))           $teacherUpdate['email']     = $request->email ?: null;
         if (!empty($teacherUpdate)) $teacher->update($teacherUpdate);
 
         $userId = $teacher->user_id ?? null;
-        if ($userId) {
-            if ($request->filled('username') && User::where('username', $request->username)->where('id', '!=', $userId)->exists()) {
-                return response()->json(['success' => false, 'message' => 'Username sudah digunakan akun lain.'], 409);
-            }
-            if ($request->filled('email') && User::where('email', $request->email)->where('id', '!=', $userId)->exists()) {
-                return response()->json(['success' => false, 'message' => 'Email sudah digunakan akun lain.'], 409);
-            }
-        }
-
         $user = null;
         if ($userId) {
             $user = User::find($userId);
             if ($user) {
+                if ($request->filled('username') && User::where('username', $request->username)->where('id', '!=', $userId)->exists()) {
+                    return response()->json(['success' => false, 'message' => 'Username sudah digunakan akun lain.'], 409);
+                }
+                if ($request->filled('email') && User::where('email', $request->email)->where('id', '!=', $userId)->exists()) {
+                    return response()->json(['success' => false, 'message' => 'Email sudah digunakan akun lain.'], 409);
+                }
+
                 $userUpdate = [];
                 if ($request->filled('username'))     $userUpdate['username'] = $request->username;
                 if ($request->filled('email'))        $userUpdate['email']    = $request->email;
@@ -183,7 +197,7 @@ class TeacherController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Data guru berhasil diperbarui.',
-            'data'    => $this->formatTeacher($teacher->fresh(), $user),
+            'data'    => $this->formatTeacher($teacher->fresh(), $user ? $user->fresh() : null),
         ]);
     }
 
@@ -196,14 +210,19 @@ class TeacherController extends Controller
         }
 
         $teacherId = $teacher->id;
+        $userId = $teacher->user_id ?? null;
 
         // Preserve data akademik: nullkan teacher_id agar riwayat siswa tidak hilang
-        ProgressReport::where('teacher_id', $teacherId)->update(['teacher_id' => null]);
+        try {
+            ProgressReport::where('teacher_id', $teacherId)->update(['teacher_id' => null]);
+        } catch (\Exception $e) {
+            Log::warning('ProgressReport update teacher_id failed: ' . $e->getMessage());
+        }
 
         $teacher->delete();
 
-        if (!empty($teacher->user_id)) {
-            User::find($teacher->user_id)?->delete();
+        if (!empty($userId)) {
+            User::find($userId)?->delete();
         }
 
         Log::info('audit.teacher_deleted', [
@@ -229,23 +248,25 @@ class TeacherController extends Controller
         }
 
         $user = User::find($teacher->user_id);
-        if ($user) {
-            $newPassword = 'mieayambakso';
-            $user->update(['password' => Hash::make($newPassword)]);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Akun user guru tidak ditemukan.'], 404);
         }
 
+        $newPassword = 'mieayambakso';
+        $user->update(['password' => Hash::make($newPassword)]);
+
         Log::info('audit.password_reset', [
-            'target'   => 'teacher',
+            'target'    => 'teacher',
             'target_id' => $teacher->id,
-            'user_id'  => $teacher->user_id ?? null,
-            'by_admin' => auth()->id(),
-            'ip'       => request()->ip(),
+            'user_id'   => $teacher->user_id ?? null,
+            'by_admin'  => auth()->id(),
+            'ip'        => request()->ip(),
         ]);
 
         return response()->json([
             'success'      => true,
-            'message'      => 'Password guru berhasil direset.',
-            'new_password' => $newPassword ?? null,
+            'message'      => 'Password guru berhasil direset ke default (mieayambakso).',
+            'new_password' => $newPassword,
         ]);
     }
 
@@ -319,7 +340,13 @@ class TeacherController extends Controller
 
     public function spesialisasiList()
     {
-        $list = Teacher::get(['bidang'])->pluck('bidang')->filter()->unique()->sort()->values()->toArray();
+        $list = Teacher::whereNotNull('bidang')
+            ->where('bidang', '!=', '')
+            ->pluck('bidang')
+            ->unique()
+            ->sort()
+            ->values()
+            ->toArray();
 
         return response()->json(['success' => true, 'data' => $list]);
     }
@@ -327,14 +354,15 @@ class TeacherController extends Controller
     private function formatTeacher($doc, $user = null): array
     {
         return [
-            'id'           => $doc->id,
-            'user_id'      => $doc->user_id ?? null,
+            'id'           => (string) ($doc->id ?? $doc->_id),
+            'user_id'      => $doc->user_id ? (string) $doc->user_id : null,
             'username'     => $user?->username ?? null,
-            'nama_guru'    => $doc->nama_guru ?? null,
-            'phone'        => $doc->phone ?? null,
-            'email'        => $doc->email ?? null,
-            'spesialisasi' => $doc->bidang ?? null,
+            'nama_guru'    => $doc->nama_guru ?? '',
+            'phone'        => $doc->phone ?? '',
+            'email'        => $doc->email ?? $user?->email ?? null,
+            'spesialisasi' => $doc->bidang ?? '',
             'created_at'   => $doc->created_at?->format('Y-m-d H:i:s'),
         ];
     }
 }
+

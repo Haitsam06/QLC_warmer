@@ -55,11 +55,10 @@ Route::get('agenda',          [AgendaController::class, 'index']);
 Route::middleware(['auth', 'role:admin'])->group(function () {
 
     // ── Teachers ──────────────────────────────────────────────────
-    Route::prefix('teachers')->group(function () {
-        Route::get('spesialisasi',          [TeacherController::class, 'spesialisasiList']);
-        Route::post('{id}/reset-password',  [TeacherController::class, 'resetPassword']);
-        Route::apiResource('/', TeacherController::class)->parameters(['' => 'id']);
-    });
+    Route::get('teachers/spesialisasi',         [TeacherController::class, 'spesialisasiList']);
+    Route::post('teachers/{id}/reset-password', [TeacherController::class, 'resetPassword']);
+    Route::apiResource('teachers', TeacherController::class)
+        ->parameters(['teachers' => 'id']);
 
     // ── Parents ───────────────────────────────────────────────────
     Route::post('parents/{id}/reset-password', [ParentController::class, 'resetPassword']);
